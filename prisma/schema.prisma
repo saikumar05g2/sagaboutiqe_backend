@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                  String               @id @default(uuid())
+  name                String
+  phone               String               @unique
+  email               String?              @unique
+  passwordHash        String
+  role                Role                 @default(CUSTOMER)
+  isDeleted           Boolean              @default(false)
+  createdAt           DateTime             @default(now())
+  measurementProfiles MeasurementProfile[]
+  orders              Order[]
+}
+
+model MeasurementProfile {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  profileName  String
+  gender       String   // WOMEN | MEN
+  unit         String   @default("INCHES") // INCHES | CM
+  measurements Json
+  notes        String?
+  updatedAt    DateTime @updatedAt
+}
+
+model Product {
+  id             String      @id @default(uuid())
+  name           String
+  category       String      // BLOUSE | LEHENGA | FROCK | BLAZER | SHIRT | PANT
+  description    String?
+  basePrice      Float
+  stockQuantity  Int         @default(10)
+  isCustomizable Boolean     @default(true)
+  inStock        Boolean     @default(true)
+  images         String[]
+  createdAt      DateTime    @default(now())
+  orderItems     OrderItem[]
+}
+
+model Order {
+  id                 String      @id @default(uuid())
+  orderNumber        String      @unique
+  userId             String
+  user               User        @relation(fields: [userId], references: [id])
+  items              OrderItem[]
+  totalAmount        Float
+  paymentStatus      String      @default("PENDING") // PENDING | PAID | REFUNDED
+  razorpayOrderId    String?
+  razorpayPaymentId  String?
+  status             OrderStatus @default(CONFIRMED)
+  cancellationReason String?
+  shippingAddress    String
+  createdAt          DateTime    @default(now())
+}
+
+model OrderItem {
+  id                  String  @id @default(uuid())
+  orderId             String
+  order               Order   @relation(fields: [orderId], references: [id])
+  productId           String
+  product             Product @relation(fields: [productId], references: [id])
+  quantity            Int     @default(1)
+  selectedSize        String  @default("M") // S | M | L | XL | CUSTOMISED
+  selectedColor       String?
+  measurementSnapshot Json?
+  stitchingNotes      String?
+  price               Float
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  CONFIRMED
+  FABRIC_CUTTING
+  STITCHING
+  FINISHING_QC
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+model Category {
+  id         String   @id @default(uuid())
+  name       String   @unique // e.g., "Bridal & Maggam Blouses"
+  slug       String   @unique // e.g., "BLOUSE"
+  genderType String   @default("WOMEN") // WOMEN | MEN
+  createdAt  DateTime @default(now())
+}
+
+model OfflineCustomer {
+  id                  String   @id @default(uuid())
+  name                String
+  phone               String
+  email               String?
+  genderType          String   @default("WOMEN") // WOMEN | MEN
+  unit                String   @default("INCHES") // INCHES | CM
+  measurements        Json     // Stores all body measurement key-value pairs
+  specifications      String?  // Multi-line tailoring & design notes
+  totalAmount         Float    @default(0)
+  advanceAmount       Float    @default(0)
+  balanceAmount       Float    @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model MeasurementField {
+  id         String   @id @default(uuid())
+  label      String   // e.g., "Bust", "Upper Bust", "Chest", "Trouser Inseam"
+  genderType String   // WOMEN | MEN
+  sortOrder  Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([label, genderType])
+}
