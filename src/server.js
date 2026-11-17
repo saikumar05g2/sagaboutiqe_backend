@@ -11,6 +11,8 @@ app.use(
   cors({
     origin: [
       "http://localhost:5174",
+      "https://sagaboutiqe.com",
+      "https://www.sagaboutiqe.com",
       process.env.FRONTEND_URL,
       process.env.FRONTEND_WWW_URL,
     ].filter(Boolean),
