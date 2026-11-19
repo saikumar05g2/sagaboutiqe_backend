@@ -199,25 +199,51 @@ exports.deleteCategory = async (req, res) => {
   }
 };
 
-// Update Stock Quantity for an Existing Product (Restock or Mark Out of Stock)
+// Update Stock Quantity & Full Product Details (Name, Category, Price, Stock, Description, Images)
 exports.updateProductStock = async (req, res) => {
   try {
     const { productId } = req.params;
-    const qty = Math.max(0, parseInt(req.body.stockQuantity, 10) || 0);
+    const { name, category, basePrice, stockQuantity, description, images } =
+      req.body;
+
+    const updateData = {};
+
+    if (stockQuantity !== undefined) {
+      const qty = Math.max(0, parseInt(stockQuantity, 10) || 0);
+      updateData.stockQuantity = qty;
+      updateData.inStock = qty > 0;
+    }
+
+    if (name !== undefined && name.trim()) {
+      updateData.name = name.trim();
+    }
+
+    if (category !== undefined && category.trim()) {
+      updateData.category = category.trim().toUpperCase();
+    }
+
+    if (basePrice !== undefined && basePrice !== "") {
+      updateData.basePrice = Math.max(0, Number(basePrice));
+    }
+
+    if (description !== undefined) {
+      updateData.description = description.trim();
+    }
+
+    if (Array.isArray(images)) {
+      updateData.images = images;
+    }
 
     const updated = await prisma.product.update({
       where: { id: productId },
-      data: {
-        stockQuantity: qty,
-        inStock: qty > 0,
-      },
+      data: updateData,
     });
 
     res.json({ success: true, data: updated });
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, message: "Failed to update product stock" });
+      .json({ success: false, message: "Failed to update product" });
   }
 };
 
@@ -343,12 +369,10 @@ exports.createMeasurementField = async (req, res) => {
   try {
     const { label, genderType } = req.body;
     if (!label || !label.trim()) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Measurement field label is required.",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Measurement field label is required.",
+      });
     }
 
     const gender = genderType === "MEN" ? "MEN" : "WOMEN";

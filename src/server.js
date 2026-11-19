@@ -30,6 +30,7 @@ app.use(morgan("dev"));
 app.use("/api/auth", require("./routes/auth.routes"));
 app.use("/api/store", require("./routes/order.routes"));
 app.use("/api/admin", require("./routes/admin.routes"));
+app.use("/api/users", require("./routes/user.routes"));
 
 app.get("/health", (_, res) =>
   res.json({ status: "SAGA Boutique API Running" }),

@@ -15,6 +15,8 @@ model User {
   email               String?              @unique
   passwordHash        String
   role                Role                 @default(CUSTOMER)
+  addresses Address[]
+  updatedAt   DateTime @default(now()) @updatedAt
   isDeleted           Boolean              @default(false)
   createdAt           DateTime             @default(now())
   measurementProfiles MeasurementProfile[]
@@ -124,4 +126,23 @@ model MeasurementField {
   createdAt  DateTime @default(now())
 
   @@unique([label, genderType])
+}
+
+model Address {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label         String   @default("Home") // e.g., "Vizag Home", "Hyderabad Office", "Bangalore Gift"
+  recipientName String
+  mobileNumber  String
+  flatNo        String
+  street        String
+  city          String
+  pincode       String
+  latitude      Float?
+  longitude     Float?
+  mapAddress    String?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
 }
